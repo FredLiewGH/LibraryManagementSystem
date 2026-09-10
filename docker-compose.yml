@@ -1,0 +1,68 @@
+﻿services:
+  # ────────────────────────────────────────────────
+  # MySQL Database
+  # ────────────────────────────────────────────────
+  lms-db:
+    image: mysql:8.0
+    container_name: lms-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}      
+    volumes:
+      - lms_db_data:/var/lib/mysql
+    ports:
+      # Development
+      - "127.0.0.1:3308:3306"
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ────────────────────────────────────────────────
+  # LMS Application
+  # ────────────────────────────────────────────────
+  lms-app:
+    build:
+      context: .
+      dockerfile: LMS/Dockerfile
+    container_name: lms-app
+    restart: unless-stopped
+    depends_on:
+      lms-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8083
+      ConnectionStrings__LMSDB: "Server=lms-db;Port=3306;Database=${MYSQL_DATABASE};User=${MYSQL_USER};Password=${MYSQL_PASSWORD};"
+    ports:
+      - "5003:8083"
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/default/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+# ────────────────────────────────────────────────
+# Volumes
+# ────────────────────────────────────────────────
+volumes:
+  # Persistent storage for MySQL data
+  lms_db_data:
+    driver: local
+
+# ────────────────────────────────────────────────
+# Network — isolated bridge network for lms
+# ────────────────────────────────────────────────
+networks:
+  lms-network:
+    driver: bridge

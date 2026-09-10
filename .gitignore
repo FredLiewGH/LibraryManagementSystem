@@ -1,0 +1,6 @@
+.env
+secrets/
+publish/
+bin/
+obj/
+.vs/
