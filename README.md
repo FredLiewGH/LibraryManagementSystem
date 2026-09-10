@@ -3,10 +3,16 @@ Basic Library Management System .NET Web API
 #=====================================================
 
 # Getting Started
-1. Run docker compose at project root
+1. Manually create a .env file in project root and set the following
+	- MYSQL_ROOT_PASSWORD=<your_mysql_root_password>
+	- MYSQL_PASSWORD=<your_mysql_dba_password>
+	- MYSQL_DATABASE=lmsdb
+	- MYSQL_USER=lms_dba
+
+2. Run docker compose at project root
 	- docker compose up --build -d
 
-2. Docker url: http://localhost:5003
+3. Docker url: http://localhost:5003
 
 # Endpoints
 1. /default/health
